@@ -1,0 +1,8 @@
+{
+  "name": "greedy-seam-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Greedy voxel meshing with T-junction detection and conforming seam stitching",
+  "license": "MIT"
+}

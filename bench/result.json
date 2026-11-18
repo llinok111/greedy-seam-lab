@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-11-18T10:26:08.022Z",
+  "node": "v24.19.0",
+  "corpus": {
+    "dims": {
+      "nx": 64,
+      "ny": 28,
+      "nz": 64
+    },
+    "seed": 20261118,
+    "voxels": 114688
+  },
+  "counts": {
+    "exposedFaces": 14146,
+    "greedyQuads": 3657,
+    "naiveTriangles": 28292,
+    "greedyTriangles": 7314,
+    "stitchedTriangles": 17080,
+    "triangleReductionVsNaivePct": 39.63,
+    "greedyTJs": 2452,
+    "greedyBoundaryEdges": 5124,
+    "stitchedTJs": 0,
+    "stitchedBoundaryEdges": 0,
+    "stitchedNonManifoldEdges": 0,
+    "stitchedArea": 14146.000000000353,
+    "areaRelErr": 2.49e-14,
+    "stitchedVertices": 8559
+  },
+  "timings": {
+    "coldStartMs": 269.647,
+    "pipelineMs": {
+      "min": 99.966,
+      "median": 111.329,
+      "p95": 186.03,
+      "max": 186.03,
+      "mean": 118.073,
+      "stddev": 26.458,
+      "rsdPct": 22.41,
+      "samples": 9
+    },
+    "countsStable": {
+      "quads": true,
+      "stitchedTriangles": true,
+      "stitchedBoundaryEdges": true,
+      "stitchedTJs": true
+    }
+  },
+  "hashes": {
+    "stitchedMesh": "dd9cfc0f",
+    "stitchedMeshRepeat": "dd9cfc0f",
+    "terrain": "c5908ad7"
+  }
+}

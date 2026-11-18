@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>greedy-seam-lab — greedy voxel meshing with conforming seams</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0b1020; color: #e8eefc; font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  #app { position: fixed; inset: 0; }
+  #hud { position: fixed; left: 14px; top: 14px; max-width: 390px; padding: 14px 16px; background: rgba(8, 14, 30, .86); border: 1px solid #26365c; border-radius: 10px; backdrop-filter: blur(6px); }
+  h1 { font-size: 15px; margin: 0 0 8px; letter-spacing: .02em; }
+  .muted { color: #8ea3c8; }
+  .num { color: #7ff0c2; font-weight: 650; }
+  .warn { color: #ffb86b; }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 1px 0; }
+  #views { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  button { background: #14203a; color: #cfe0ff; border: 1px solid #2d4670; border-radius: 6px; padding: 5px 9px; font: inherit; cursor: pointer; }
+  button.on { background: #2c5d8f; border-color: #6ea8e0; color: #fff; }
+  #note { margin-top: 9px; padding-top: 9px; border-top: 1px solid #26365c; color: #8ea3c8; }
+  a { color: #7fb6ff; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="hud">
+  <h1>greedy-seam-lab</h1>
+  <div class="muted">Same voxel surface, three mesh constructions.</div>
+  <div class="row"><span>voxels</span><span id="vox" class="num">…</span></div>
+  <div class="row"><span>exposed unit faces</span><span id="faces" class="num">…</span></div>
+  <div class="row"><span>naive triangles</span><span id="trisNaive" class="num">…</span></div>
+  <div class="row"><span>greedy quads → triangles</span><span id="greedy" class="num">…</span></div>
+  <div class="row"><span>greedy T-junctions</span><span id="tjG" class="warn">…</span></div>
+  <div class="row"><span>greedy crack edges</span><span id="beG" class="warn">…</span></div>
+  <div class="row"><span>stitched triangles</span><span id="trisS" class="num">…</span></div>
+  <div class="row"><span>stitched T-junctions</span><span id="tjS" class="num">…</span></div>
+  <div class="row"><span>stitched crack edges</span><span id="beS" class="num">…</span></div>
+  <div id="views">
+    <button data-view="naive">naive</button>
+    <button data-view="greedy">greedy (cracked)</button>
+    <button data-view="stitched" class="on">stitched</button>
+  </div>
+  <div id="note">Orbit: drag / wheel. Every number above is computed by <code>src/core.mjs</code> in this page; node's <code>bench/verify.mjs</code> checks the same counts.</div>
+</div>
+<script type="module" src="./main.js"></script>
+</body>
+</html>
