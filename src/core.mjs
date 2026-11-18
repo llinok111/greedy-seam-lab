@@ -202,9 +202,23 @@ export function detectTJunctions(quads, vertexKeys) {
 
 export function detectMeshTJunctions(positions, indices) {
   const n = positions.length / 3;
+  // Scale-invariant spatial grid: cell edge and collinearity tolerance are both
+  // fractions of the mesh bounding-box diagonal, so the verdict does not depend
+  // on the units the mesh was authored in.
+  let lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < n; i++) for (let k = 0; k < 3; k++) {
+    const v = positions[i * 3 + k];
+    if (v < lo[k]) lo[k] = v;
+    if (v > hi[k]) hi[k] = v;
+  }
+  const diag = Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]);
+  if (!(diag > 0) || !Number.isFinite(diag)) return { count: 0, samples: [], vertices: n, edges: 0, diag: 0 };
+  const cell = diag / 64;
+  const perpEps = (1e-9 * diag) ** 2; // squared perpendicular distance
+  const tEps = 1e-12;
   const vkeys = new Set();
   const cells = new Map();
-  const ck = (x, y, z) => `${Math.floor(x)},${Math.floor(y)},${Math.floor(z)}`;
+  const ck = (x, y, z) => `${Math.floor(x / cell)},${Math.floor(y / cell)},${Math.floor(z / cell)}`;
   for (let i = 0; i < n; i++) {
     const p = [positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]];
     vkeys.add(p.join(','));
@@ -227,9 +241,9 @@ export function detectMeshTJunctions(positions, indices) {
     const min = [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.min(a[2], b[2])];
     const max = [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.max(a[2], b[2])];
     const seen = new Set();
-    for (let gx = Math.floor(min[0]); gx <= Math.floor(max[0]); gx++)
-      for (let gy = Math.floor(min[1]); gy <= Math.floor(max[1]); gy++)
-        for (let gz = Math.floor(min[2]); gz <= Math.floor(max[2]); gz++) {
+    for (let gx = Math.floor(min[0] / cell); gx <= Math.floor(max[0] / cell); gx++)
+      for (let gy = Math.floor(min[1] / cell); gy <= Math.floor(max[1] / cell); gy++)
+        for (let gz = Math.floor(min[2] / cell); gz <= Math.floor(max[2] / cell); gz++) {
           const arr = cells.get(`${gx},${gy},${gz}`);
           if (!arr) continue;
           for (const ic of arr) {
@@ -239,8 +253,9 @@ export function detectMeshTJunctions(positions, indices) {
             const ap = [p[0] - a[0], p[1] - a[1], p[2] - a[2]];
             const cr = cross(ab, ap);
             const len2 = dot(ab, ab);
+            if (!(len2 > 0)) continue;
             const t = dot(ap, ab) / len2;
-            if (dot(cr, cr) / len2 <= 1e-18 && t > 1e-12 && t < 1 - 1e-12) {
+            if (dot(cr, cr) / len2 <= perpEps && t > tEps && t < 1 - tEps) {
               seen.add(ic);
               count++;
               if (samples.length < 5) samples.push({ a, b, p });
@@ -248,7 +263,7 @@ export function detectMeshTJunctions(positions, indices) {
           }
         }
   }
-  return { count, samples, vertices: n, edges: edges.size };
+  return { count, samples, vertices: n, edges: edges.size, diag };
 }
 
 export function greedyMesh(quads) {

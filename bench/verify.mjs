@@ -71,6 +71,28 @@ check('mesh hash determinism', run2 === hashMesh(stitched.positions, stitched.in
   `${run2} vs ${hashMesh(stitched.positions, stitched.indices)}`, 'equal');
 check('stitched vertex count', stitched.positions.length / 3 < 20000, stitched.positions.length / 3, '< 20000');
 
+// Scale invariance: the T-junction verdict must not depend on authored units.
+const scales = [1e-6, 1e-3, 1, 1e3, 1e6];
+const scaled = [];
+for (const s of scales) {
+  const pos = new Float64Array(stitched.positions.length);
+  for (let i = 0; i < pos.length; i++) pos[i] = stitched.positions[i] * s;
+  const g = greedy.positions;
+  const gp = new Float64Array(g.length);
+  for (let i = 0; i < gp.length; i++) gp[i] = g[i] * s;
+  scaled.push({
+    s,
+    greedyTJ: detectMeshTJunctions(gp, greedy.indices).count,
+    stitchedTJ: detectMeshTJunctions(pos, stitched.indices).count,
+    diag: detectMeshTJunctions(pos, stitched.indices).diag,
+  });
+}
+const sameVerdict = scaled.every((r) => r.greedyTJ === tjGreedy.count && r.stitchedTJ === 0);
+check('scale-invariant T-junction verdict', sameVerdict,
+  scaled.map((r) => `${r.s}:${r.greedyTJ}/${r.stitchedTJ}`).join(' '), `every scale ${tjGreedy.count}/0`);
+check('scaled bbox diagonal tracks scale', scaled.every((r, i) => rel(r.diag, tjNaive.diag * r.s) < 1e-9),
+  scaled.map((r) => r.diag.toExponential(3)).join(' '), 'linear in scale');
+
 const ms = performance.now() - t0;
 console.log(`\n${passed} passed, ${failed} failed in ${ms.toFixed(1)} ms`);
 console.log(`SUMMARY faces=${faces.length} quads=${quads.length} tGreedy=${tjGreedy.count} tStitched=${tjStitched.count} trisNaive=${naiveAudit.triangles} trisGreedy=${greedyAudit.triangles} trisStitched=${stitchAudit.triangles} hash=${hashMesh(stitched.positions, stitched.indices)}`);

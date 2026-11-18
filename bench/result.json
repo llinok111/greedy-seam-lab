@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-18T10:26:08.022Z",
+  "generatedAt": "2026-11-18T12:25:40.097Z",
   "node": "v24.19.0",
   "corpus": {
     "dims": {
@@ -27,15 +27,15 @@
     "stitchedVertices": 8559
   },
   "timings": {
-    "coldStartMs": 269.647,
+    "coldStartMs": 250.93,
     "pipelineMs": {
-      "min": 99.966,
-      "median": 111.329,
-      "p95": 186.03,
-      "max": 186.03,
-      "mean": 118.073,
-      "stddev": 26.458,
-      "rsdPct": 22.41,
+      "min": 98.982,
+      "median": 100.991,
+      "p95": 159.772,
+      "max": 159.772,
+      "mean": 110.987,
+      "stddev": 20.329,
+      "rsdPct": 18.32,
       "samples": 9
     },
     "countsStable": {

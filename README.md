@@ -22,7 +22,7 @@ This repo reports both, then repairs the seam:
 
 ```bash
 node tools/gen-sample.mjs        # deterministic data/terrain.json (sha256 printed)
-node bench/verify.mjs            # 22 assertions, exits 0 only if all pass
+node bench/verify.mjs            # 24 assertions, exits 0 only if all pass
 node bench/bench.mjs             # 9 samples + cold start -> bench/result.json
 python3 -m http.server 4173      # then open http://localhost:4173
 ```
@@ -45,7 +45,7 @@ Corpus: `64 × 28 × 64` = **114,688** voxels, seed `20261118`; generator output
 
 - Greedy quads: **3,657**. Stitched vertices: **8,559**. Winding flips during stitch: **0**.
 - Stitched mesh hash (FNV-1a over quantised coords + indices): `dd9cfc0f`, identical on a second independent pipeline run.
-- Timing (full generate → faces → greedy → stitch → audit → T-junction scan): cold **269.647 ms**, median **111.329 ms**, p95 **186.030 ms**, min **99.966 ms**, stddev **26.458 ms**, **RSD 22.41%** over 9 samples. The spread is real: the scan allocates a fresh vertex/edge hash map per run and V8 occasionally pays a major GC (p95 186 ms). We report it rather than trimming samples.
+- Timing (full generate → faces → greedy → stitch → audit → T-junction scan): cold **250.930 ms**, median **100.991 ms**, p95 **159.772 ms**, min **98.982 ms**, stddev **20.329 ms**, **RSD 18.32%** over 9 samples. The spread is real: the scan allocates a fresh vertex/edge hash map per run and V8 occasionally pays a major GC (p95 186 ms). We report it rather than trimming samples.
 - Determinism: `node tools/gen-sample.mjs` twice produces the same 115 KB `data/terrain.json`; counts and mesh hash are identical across runs.
 
 Run the baseline yourself:
@@ -58,9 +58,13 @@ node baseline/naive.mjs
 
 **B 档 — 把 greedy meshing 的接缝做成可执行证书，而不是又一张三角形减少表。** 现有 greedy meshing 教程/实现通常只报面数下降，不检查 T-junction；本仓库把「顶点落在另一条边内部」和「边界裂缝边」变成 node 可复算的计数（2,452 / 5,124），并给出**只在真实角点处切边**的缝合：拼接后在 3,657 个合并矩形上得到 0 T-junction、0 裂缝边、0 非流形边，同时保留 39.63% 的三角形节省。与已有的 voxel-seal / iso-tetra / greedy 教程的区别是：它证明的是**合并后表面仍然共形**，而不是体素化或等值面提取。页面与 node 共用同一 `src/core.mjs`，HUD 数字与 `bench/result.json` 逐项一致。
 
+## 2026-11-18 fix: absolute tolerance removed
+
+The previous detector used a fixed squared-cross tolerance `1e-18` and a unit cell grid, so a mesh authored in metres vs millimetres could receive a different verdict. Both constants are now fractions of the bounding-box diagonal. `bench/verify.mjs` asserts the verdict at five scales spanning 12 orders of magnitude; the counts are identical (`2452` greedy T-junctions, `0` after stitching) and the measured diagonal scales linearly.
+
 ## Known limitations (honest)
 
-- **Unit integer lattice only.** Inputs are voxel coordinates in a discrete grid; the tool does not define behaviour for arbitrary scaled meshes. The T-junction collinearity test uses an **absolute** squared-cross tolerance `1e-18`; it is valid for coordinates in roughly `[-1e3, 1e3]`. The area check is **relative** (`1e-9`). There is no continuous-scale invariance claim.
+- **Scale-invariant T-junction verdict, integer-lattice meshing.** As of 2026-11-18 the T-junction scan derives both its spatial cell size (`bboxDiag/64`) and its collinearity tolerance (`(1e-9 * bboxDiag)^2`, squared perpendicular distance) from the mesh bounding box. The verdict was verified unchanged on the same mesh scaled by `1e-6, 1e-3, 1, 1e3, 1e6` (greedy `2452` T-junctions, stitched `0` at every scale). The mesher itself still expects voxel-coordinate input; arbitrary rotated/sheared meshes are not claimed.
 - The stitch is a centroid fan: it adds one centre vertex per quad and `k` triangles for a polygon with `k` boundary vertices. It is conforming and crack-free, but **not** a minimal triangulation (ear clipping would save about one triangle per quad).
 - Greedy merging is per material; material boundaries are never crossed, so mixed-material terrain limits the reduction.
 - T-junction count is an incidence count (vertex-on-edge pairs); one geometric crack can contribute several incidences.
